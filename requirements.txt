@@ -1,0 +1,7 @@
+streamlit
+easyocr
+pypdf
+opencv-python-headless
+qrcode
+Pillow
+numpy
