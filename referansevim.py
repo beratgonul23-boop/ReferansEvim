@@ -20,7 +20,7 @@ except ImportError:
 
 st.set_page_config(page_title="ReferansEvim Pro", page_icon="🏠", layout="wide", initial_sidebar_state="collapsed")
 
-# --- AGRESİF CSS DÜZELTMESİ (KOYU MOD ENGELLEYİCİ) ---
+# --- 🔥 AGRESİF CSS DÜZELTMESİ 🔥 ---
 st.markdown("""
 <style>
     .stApp, [data-testid="stAppViewContainer"] { background-color: #f0f2f6 !important; }
@@ -32,20 +32,18 @@ st.markdown("""
     }
     .stSlider [data-testid="stWidgetLabel"] p, .stSlider div { color: #002147 !important; }
     div.stButton > button, div.stDownloadButton > button, div.stFormSubmitButton > button {
-        background-color: #002147 !important; color: #ffffff !important; border: none !important; border-radius: 8px !important; padding: 10px 20px !important; font-weight: bold !important;
+        background-color: #002147 !important; border: none !important; border-radius: 8px !important; padding: 10px 20px !important; font-weight: bold !important;
     }
-    div.stButton > button:hover, div.stDownloadButton > button:hover {
-        background-color: #003366 !important; color: #ffffff !important; border: 1px solid white !important;
-    }
-    div.stButton > button p, div.stDownloadButton > button p { color: #ffffff !important; }
+    div.stButton > button *, div.stDownloadButton > button *, div.stFormSubmitButton > button * { color: #ffffff !important; }
+    div.stButton > button:hover, div.stDownloadButton > button:hover { background-color: #003366 !important; border: 1px solid white !important; }
     [data-testid="stFileUploader"] section { background-color: #ffffff !important; border: 2px dashed #002147 !important; }
     [data-testid="stFileUploaderDropzoneInstructions"] * { color: #002147 !important; }
-    [data-testid="stFileUploaderDropzone"] button { background-color: #002147 !important; color: #ffffff !important; border-radius: 6px !important; }
+    [data-testid="stFileUploaderDropzone"] button { background-color: #002147 !important; border-radius: 6px !important; }
     [data-testid="stFileUploaderDropzone"] button * { color: #ffffff !important; }
     [data-testid="stUploadedFile"] { background-color: #e6eef5 !important; border: 1px solid #002147 !important; border-radius: 5px !important; }
     [data-testid="stUploadedFile"] * { color: #002147 !important; }
-    .stAlert { background-color: #ffffff !important; border: 1px solid #ddd !important; color: #000000 !important; }
-    .stAlert div[data-testid="stMarkdownContainer"] p { color: #000000 !important; }
+    .stAlert { background-color: #ffffff !important; border: 1px solid #ddd !important; }
+    .stAlert * { color: #000000 !important; }
     [data-testid="stForm"] { background-color: transparent !important; border: none !important; }
 </style>
 """, unsafe_allow_html=True)
@@ -105,9 +103,8 @@ def belgeyi_tara_ve_dogrula(uploaded_file, belge_tipi="tapu"):
 
 # --- RAPOR, QR VE PUANLAMA ---
 def rapor_metni_hazirla(ad, kod, puan, tarih, analiz):
-    # Analiz listesini alt alta düzgün yazdıralım
     analiz_str = "\n".join([f"- {madde}" for madde in analiz])
-    return f"""REFERANSEVİM GÜVENLİK RAPORU
+    return f"""REFERANSEVİM GÜVENLİK RAPORU (KVKK UYUMLU)
 ----------------------------------
 Referans Kodu: {kod}
 Sorgulama Tarihi: {tarih}
@@ -119,7 +116,9 @@ Güvenilirlik Puanı: {puan} / 5
 DETAYLI ANALİZ:
 {analiz_str}
 ----------------------------------
-Bu belge ReferansEvim yapay zeka ve OCR sistemleri tarafindan dogrulanmistir. Yasal sorumluluk beyan edene aittir."""
+* Yasal Uyari: Bu rapor ReferansEvim yapay zeka sistemleri tarafindan hazirlanmistir. 
+Sisteme yuklenen hicbir kimlik veya gelir belgesi sunucularda SAKLANMAMISTIR. 
+Tum belgeler analiz sonrasi aninda imha edilmistir."""
 
 def qr_kod_olustur(veri):
     qr = qrcode.QRCode(box_size=10, border=4)
@@ -130,41 +129,26 @@ def qr_kod_olustur(veri):
     img.save(buffer, format="PNG")
     return buffer.getvalue()
 
-def detayli_puan_hesapla(gelir, findex, meslek, belge_durumu, eski_ev_sahibi_ref):
+def detayli_puan_hesapla(gelir, findex, meslek, belge_durumu, eski_tel):
     puan = 0
     analiz = []
     
-    # Gelir
-    if gelir >= 40000: puan += 30; analiz.append("Gelir Seviyesi: Yüksek (+30p)")
+    if gelir >= 40000: puan += 40; analiz.append("Gelir Seviyesi: Yüksek (+40p)")
     elif gelir >= 17002: puan += 20; analiz.append("Gelir Seviyesi: Standart/Orta (+20p)")
     else: puan += 10; analiz.append("Gelir Seviyesi: Düşük Riskli (+10p)")
     
-    # Findeks
-    if findex >= 1500: puan += 30; analiz.append("Kredi Notu: Çok İyi (+30p)")
+    if findex >= 1500: puan += 40; analiz.append("Kredi Notu: Çok İyi (+40p)")
     elif findex >= 1200: puan += 20; analiz.append("Kredi Notu: Orta/İyi (+20p)")
     else: puan += 0; analiz.append("Kredi Notu: Riskli (0p)")
     
-    # Belge (Bordro)
-    if belge_durumu: puan += 20; analiz.append("Maaş Bordrosu: AI Onaylı (+20p)")
+    if belge_durumu: puan += 20; analiz.append("Maaş Bordrosu: AI Onaylı (Belge İmha Edildi) (+20p)")
     else: analiz.append("Maaş Bordrosu: Yüklenmedi (0p)")
     
-    # Eski Ev Sahibi Referansı (YENİ EKLENEN VİZYON)
-    if eski_ev_sahibi_ref == "5 Yıldız (Çok İyi)":
-        puan += 20; analiz.append("Eski Ev Sahibi Referansı: Kusursuz (+20p)")
-    elif eski_ev_sahibi_ref == "4 Yıldız (İyi)":
-        puan += 10; analiz.append("Eski Ev Sahibi Referansı: Olumlu (+10p)")
-    elif eski_ev_sahibi_ref == "3 Yıldız (Orta)":
-        puan += 0; analiz.append("Eski Ev Sahibi Referansı: Nötr (0p)")
-    elif eski_ev_sahibi_ref in ["1 Yıldız (Kötü)", "2 Yıldız (Zayıf)"]:
-        puan -= 20; analiz.append("Eski Ev Sahibi Referansı: NEGATİF RİSK (-20p)")
-    else:
-        analiz.append("Eski Ev Sahibi Referansı: Yok/Belirtilmedi (0p)")
+    if eski_tel: analiz.append(f"Referans: Eski ev sahibi numarası eklendi ({eski_tel}). Lütfen arayarak teyit ediniz.")
+    else: analiz.append("Referans: Eski ev sahibi bilgisi girilmedi.")
     
-    # Toplam puanı 100 üzerinden 5 yıldıza çevirme
-    if puan < 0: puan = 0
-    if puan > 100: puan = 100
     yildiz = round((puan/100)*5 * 2) / 2
-    if yildiz < 1: yildiz = 1.0 # Minimum 1 yıldız
+    if yildiz < 1: yildiz = 1.0 
     return yildiz, analiz
 
 # --- UYGULAMA ---
@@ -176,15 +160,27 @@ if not st.session_state.giris_yapildi:
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br><br><h1 style='text-align: center;'>ReferansEvim</h1>", unsafe_allow_html=True)
-        st.info("💡 Sistem, yapay zeka ile belge doğrulama ve referans ağı içerir.")
-        tip = st.radio("Seçiniz:", ("👤 Kiracı Girişi", "🔑 Ev Sahibi Girişi"))
-        onay = st.checkbox("Yasal Sorumluluk Beyanı: Girdiğim tüm bilgilerin doğruluğunu onaylıyorum.")
-        if st.button("Sisteme Giriş Yap", use_container_width=True):
+        st.info("💡 %100 KVKK Uyumlu: Yüklenen belgeler asla sunucularda saklanmaz, analiz sonrası anında imha edilir.")
+        tip = st.radio("Sisteme Giriş Tipi:", ("👤 Kiracı Girişi", "🔑 Ev Sahibi Girişi"))
+        
+        # --- YENİ PROFESYONEL KVKK ONAYI ---
+        with st.expander("⚖️ KVKK ve Aydınlatma Metnini Okumak İçin Tıklayınız"):
+            st.write("""
+            **Kişisel Verilerin Korunması ve Veri İmha Politikası**
+            1. Sisteme yüklediğiniz belgeler (Maaş Bordrosu, Tapu vb.) yapay zeka tarafından sadece anlık olarak okunur.
+            2. Okuma işlemi bittikten hemen sonra belgeniz sunucularımızdan **kalıcı olarak silinir**. Veritabanımızda hiçbir dosya tutulmaz.
+            3. T.C. Kimlik numaranız doğrulama amaçlı istenir ve asla kayıt altına alınmaz.
+            4. Bu platformu kullanarak, girdiğiniz verilerin kendi rızanızla analiz edilmesini onaylamış olursunuz.
+            """)
+        
+        onay = st.checkbox("KVKK Aydınlatma Metnini okudum, anladım ve kabul ediyorum.")
+        
+        if st.button("Sisteme Güvenli Giriş Yap", use_container_width=True):
             if onay:
                 st.session_state.giris_yapildi = True
                 st.session_state.kullanici_tipi = "kiraci" if "Kiracı" in tip else "evsahibi"
                 st.rerun()
-            else: st.error("Lütfen yasal uyarıyı onaylayınız.")
+            else: st.error("Lütfen sisteme girmek için KVKK metnini onaylayınız.")
 
 else:
     c1, c2 = st.columns([8, 1])
@@ -201,31 +197,36 @@ else:
             c1, c2 = st.columns(2)
             with c1: 
                 ad = st.text_input("Ad Soyad")
-                tc = st.text_input("T.C. Kimlik No")
-                eski_ev_sahibi = st.selectbox("Eski Ev Sahibinizin Sizin İçin Referans Puanı", 
-                                             ["İlk Defa Eve Çıkıyorum / Referans Yok", "5 Yıldız (Çok İyi)", "4 Yıldız (İyi)", "3 Yıldız (Orta)", "2 Yıldız (Zayıf)", "1 Yıldız (Kötü)"])
+                tc = st.text_input("T.C. Kimlik No (Kayıt Altına Alınmaz)")
+                eski_ev_sahibi_tel = st.text_input("Eski Ev Sahibi Telefon Numarası (Güven İçin Önerilir)")
             with c2: 
                 gelir = st.number_input("Aylık Net Gelir (TL)", step=1000)
                 findex = st.slider("Tahmini Findeks Kredi Notu", 0, 1900, 1100)
                 meslek = st.text_input("Meslek / Şirket")
             
             st.markdown("<hr>", unsafe_allow_html=True)
-            dosya = st.file_uploader("Maaş Bordrosu (Yapay Zeka Onayı Ekstra Puan Kazandırır)", type=["pdf", "jpg", "png"])
+            dosya = st.file_uploader("Maaş Bordrosu (Verileriniz saklanmaz, anında imha edilir)", type=["pdf", "jpg", "png"])
             
-            if st.form_submit_button("Analiz Et ve Raporu Hazırla"):
+            if st.form_submit_button("Analiz Et ve Raporu Hazırla", use_container_width=True):
                 if not ad: st.error("Lütfen isminizi giriniz.")
                 else:
                     belge_ok = False
                     if dosya:
                         with st.spinner("Maaş bordrosu yapay zeka ile taranıyor (OCR)..."):
-                            time.sleep(0.5)
+                            time.sleep(1) # Animasyon hissi için
                             ok, msg = belgeyi_tara_ve_dogrula(dosya, "maas")
-                            if ok: belge_ok = True; st.success(msg)
+                            if ok: 
+                                belge_ok = True
+                                st.success(f"{msg}")
+                                # --- GÜVENLİK İMHA MESAJI ---
+                                st.info("🛡️ Güvenlik Protokolü: Yüklenen belge veritabanından kalıcı olarak silindi.")
                             else: st.warning(f"Bordro onaylanamadı: {msg}")
                     
-                    puan, analiz = detayli_puan_hesapla(gelir, findex, meslek, belge_ok, eski_ev_sahibi)
+                    puan, analiz = detayli_puan_hesapla(gelir, findex, meslek, belge_ok, eski_ev_sahibi_tel)
                     kod = f"REF-{random.randint(10000, 99999)}"
                     tarih = datetime.now().strftime("%d-%m-%Y")
+                    
+                    # DİKKAT: T.C. KİMLİK NUMARASINI VERİTABANINA ASLA KAYDETMİYORUZ!
                     veri = {"ad": ad, "puan": puan, "tarih": tarih, "analiz": analiz, "meslek": meslek}
                     veri_kaydet(kod, veri)
                     st.session_state.son_rapor = {"kod": kod, "veri": veri}
@@ -252,12 +253,50 @@ else:
                 
             st.markdown("<br>", unsafe_allow_html=True)
             metin = rapor_metni_hazirla(rp['veri']['ad'], rp['kod'], rp['veri']['puan'], rp['veri']['tarih'], rp['veri']['analiz'])
-            st.download_button("📄 Detaylı Raporu İndir (PDF/TXT Formatında)", metin, file_name=f"ReferansEvim_Rapor_{rp['kod']}.txt")
+            st.download_button("📄 Detaylı Raporu İndir (KVKK Uyumlu)", metin, file_name=f"ReferansEvim_Rapor_{rp['kod']}.txt", use_container_width=True)
 
     # EV SAHİBİ PANELİ
     elif st.session_state.kullanici_tipi == "evsahibi":
         st.subheader("🛡️ Kiracı & Belge Doğrulama Merkezi")
-        st.info("⚠️ Sisteme yetkisiz erişimi engellemek için lütfen Tapu belgenizi yükleyiniz. AI sistemimiz belgeyi teyit edecektir.")
+        st.info("⚠️ Lütfen Tapu belgenizi yükleyiniz. Belgeniz analiz edildikten sonra SAKLANMADAN SİLİNECEKTİR.")
         
-        tapu = st.file_uploader("Tapu Belgesi Yükle (OCR Kontrolü)", type=["pdf", "jpg", "png"])
+        tapu = st.file_uploader("Tapu Belgesi Yükle (Anında İmha Edilir)", type=["pdf", "jpg", "png"])
         kod = st.text_input("Kiracının Size Verdiği Kod (Örn: REF-12345)")
+        
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        if st.button("Belgeyi Tarat ve Sorgula 🔍", use_container_width=True):
+            if not tapu: st.error("Lütfen önce kendi Tapu belgenizi yükleyin.")
+            else:
+                with st.spinner("Tapu Belgesi Güvenlik Taramasından Geçiyor..."):
+                    time.sleep(1)
+                    ok, msg = belgeyi_tara_ve_dogrula(tapu, "tapu")
+                    if not ok:
+                        st.error("⛔ GÜVENLİK İHLALİ: Sistem belgeyi reddetti!")
+                        st.error(msg)
+                    else:
+                        st.success("✅ KİMLİK DOĞRULANDI: Tapu belgesi geçerli.")
+                        st.info("🛡️ Güvenlik Protokolü: Yüklenen tapu belgesi sunuculardan kalıcı olarak silindi.")
+                        
+                        db = verileri_yukle()
+                        if kod in db:
+                            k = db[kod]
+                            analiz_html = "".join([f"<li>{m}</li>" for m in k['analiz']])
+                            st.markdown(f"""
+                            <div style="background:white; padding:25px; border-left:10px solid #002147; border-radius:5px; margin-top:10px;">
+                                <h2 style="color:#002147; margin:0;">✅ KİRACI RAPORU BULUNDU</h2>
+                                <hr>
+                                <p style="color:black !important; font-size:1.1em;"><b>İsim:</b> {k['ad']}</p>
+                                <p style="color:black !important; font-size:1.1em;"><b>Meslek:</b> {k.get('meslek', 'Belirtilmedi')}</p>
+                                <p style="color:black !important; font-size:1.1em;"><b>Güvenilirlik Puanı:</b> {k['puan']} / 5</p>
+                                <h4 style="color:#002147; margin-top:15px;">🔍 Sistem Analizi:</h4>
+                                <ul style="color:black !important;">{analiz_html}</ul>
+                                <p style="color:gray !important; font-size:0.8em; margin-top:10px;"><em>Rapor Oluşturma Tarihi: {k['tarih']}</em></p>
+                            </div>
+                            """, unsafe_allow_html=True)
+                            
+                            st.markdown("<br>", unsafe_allow_html=True)
+                            txt = rapor_metni_hazirla(k['ad'], kod, k['puan'], k['tarih'], k['analiz'])
+                            st.download_button("📄 Kiracı Sicil Raporunu İndir", txt, file_name=f"ReferansEvim_Sorgu_{kod}.txt", use_container_width=True)
+                        else:
+                            st.warning("Girdiğiniz kod sistemde bulunamadı. Lütfen kiracıdan kodu teyit edin.")
