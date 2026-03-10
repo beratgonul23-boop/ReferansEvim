@@ -151,17 +151,18 @@ if 'son_rapor' not in st.session_state: st.session_state.son_rapor = None
 if 'onaylanan_kiraci' not in st.session_state: st.session_state.onaylanan_kiraci = None
 
 if not st.session_state.giris_yapildi:
-    col1, col2, col3 = st.columns([1, 2, 1])
+    col1, col2, col3 = st.columns([1, 4, 1]) # BURAYI GENİŞLETTİK (Orta sütun artık devasa)
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        # YENİ LOGO ALANI
+        # LOGO ALANI YENİDEN BOYUTLANDIRILDI
         logo_yolu = "logo.png"
         if os.path.exists("logo.png.png"):
             logo_yolu = "logo.png.png"
             
         if os.path.exists(logo_yolu):
-            c_logo1, c_logo2, c_logo3 = st.columns([1, 2, 1])
+            # Logonun kendisi için iç sütunlar, logoyu daha da büyütecek şekilde ayarlandı
+            c_logo1, c_logo2, c_logo3 = st.columns([1, 6, 1]) 
             with c_logo2:
                 st.image(logo_yolu, use_container_width=True)
         else:
