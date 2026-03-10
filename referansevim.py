@@ -54,7 +54,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- VERİTABANI VE FONKSİYONLAR (Aynı Kaldı) ---
+# --- VERİTABANI VE FONKSİYONLAR ---
 DB_DOSYASI = "referans_db.json"
 def verileri_yukle():
     if not os.path.exists(DB_DOSYASI): return {}  
@@ -151,18 +151,26 @@ if 'son_rapor' not in st.session_state: st.session_state.son_rapor = None
 if 'onaylanan_kiraci' not in st.session_state: st.session_state.onaylanan_kiraci = None
 
 if not st.session_state.giris_yapildi:
-    # --- YENİ VİTRİN TASARIMI ---
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
         st.markdown("<br><br>", unsafe_allow_html=True)
         
-        # LOGO ALANI (Şimdilik Typografi, logonu yapınca buraya 'st.image' ekleyeceğiz)
-        st.markdown("<h1 style='text-align: center; font-size: 3.5rem; font-weight: 800;'>Referans<span style='font-weight: 300;'>Evim</span></h1>", unsafe_allow_html=True)
+        # YENİ LOGO ALANI
+        logo_yolu = "logo.png"
+        if os.path.exists("logo.png.png"):
+            logo_yolu = "logo.png.png"
+            
+        if os.path.exists(logo_yolu):
+            c_logo1, c_logo2, c_logo3 = st.columns([1, 2, 1])
+            with c_logo2:
+                st.image(logo_yolu, use_container_width=True)
+        else:
+            st.markdown("<h1 style='text-align: center; font-size: 3.5rem; font-weight: 800;'>Referans<span style='font-weight: 300;'>Evim</span></h1>", unsafe_allow_html=True)
+            
         st.markdown("<p style='text-align: center; color: gray;'>Türkiye'nin İlk Yapay Zeka Destekli Kiracı Doğrulama ve Uzlaştırma Platformu</p><br>", unsafe_allow_html=True)
         
         st.info("💡 %100 KVKK Uyumlu: Yüklenen belgeler asla sunucularda saklanmaz, analiz sonrası anında imha edilir.")
         
-        # GİRİŞ SEÇENEKLERİ (NOTLARINA GÖRE)
         kullanici_tipi = st.selectbox("Sisteme Giriş Tipinizi Seçiniz", ["Kiracı Olarak Giriş Yap", "Ev Sahibi Olarak Giriş Yap"])
         
         with st.expander("⚖️ KVKK ve Aydınlatma Metnini Okumak İçin Tıklayınız"):
@@ -177,7 +185,6 @@ if not st.session_state.giris_yapildi:
         
         st.markdown("<br>", unsafe_allow_html=True)
         
-        # SAHTE (VİZYON) GİRİŞ BUTONLARI
         c_btn1, c_btn2 = st.columns(2)
         with c_btn1:
             st.markdown("<div class='btn-google'>", unsafe_allow_html=True)
