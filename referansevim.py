@@ -20,10 +20,10 @@ except ImportError:
 
 st.set_page_config(page_title="ReferansEvim Pro", page_icon="🏠", layout="wide", initial_sidebar_state="collapsed")
 
-# --- 🔥 AGRESİF CSS DÜZELTMESİ 🔥 ---
+# --- 🔥 AGRESİF CSS DÜZELTMESİ (VİTRİN İÇİN ÖZEL) 🔥 ---
 st.markdown("""
 <style>
-    .stApp, [data-testid="stAppViewContainer"] { background-color: #f0f2f6 !important; }
+    .stApp, [data-testid="stAppViewContainer"] { background-color: #f8f9fa !important; }
     h1, h2, h3, h4, p, li, label, .stMarkdown, .stMarkdown p, [data-testid="stMarkdownContainer"] p, .stWidget label p {
         color: #002147 !important; font-family: 'Source Sans Pro', sans-serif;
     }
@@ -36,6 +36,12 @@ st.markdown("""
     }
     div.stButton > button *, div.stDownloadButton > button *, div.stFormSubmitButton > button * { color: #ffffff !important; }
     div.stButton > button:hover, div.stDownloadButton > button:hover { background-color: #003366 !important; border: 1px solid white !important; }
+    
+    /* GİRİŞ BUTONLARINA ÖZEL TASARIM */
+    .btn-google > button { background-color: #ffffff !important; color: #444 !important; border: 1px solid #ddd !important; }
+    .btn-google > button * { color: #444 !important; }
+    .btn-edevlet > button { background-color: #e30a17 !important; color: #ffffff !important; }
+    
     [data-testid="stFileUploader"] section { background-color: #ffffff !important; border: 2px dashed #002147 !important; }
     [data-testid="stFileUploaderDropzoneInstructions"] * { color: #002147 !important; }
     [data-testid="stFileUploaderDropzone"] button { background-color: #002147 !important; border-radius: 6px !important; }
@@ -48,7 +54,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- VERİTABANI ---
+# --- VERİTABANI VE FONKSİYONLAR (Aynı Kaldı) ---
 DB_DOSYASI = "referans_db.json"
 def verileri_yukle():
     if not os.path.exists(DB_DOSYASI): return {}  
@@ -60,7 +66,6 @@ def veri_kaydet(kod, veri):
     db[kod] = veri
     with open(DB_DOSYASI, "w", encoding="utf-8") as f: json.dump(db, f, ensure_ascii=False, indent=4)
 
-# --- GERÇEK BELGE ANALİZİ (OCR) ---
 @st.cache_resource
 def ocr_modeli_yukle():
     if OCR_AKTIF: return easyocr.Reader(['tr', 'en'], gpu=False) 
@@ -101,55 +106,13 @@ def belgeyi_tara_ve_dogrula(uploaded_file, belge_tipi="tapu"):
     if eslesme_sayisi >= limit: return True, f"Doğrulandı! ({', '.join(bulunanlar)})"
     else: return False, f"Anahtar kelime bulunamadı. (Okunan: {metin_icerigi[:50]}...)"
 
-# --- RAPOR VE SÖZLEŞME METİNLERİ ---
 def rapor_metni_hazirla(ad, kod, puan, tarih, analiz):
     analiz_str = "\n".join([f"- {madde}" for madde in analiz])
-    return f"""REFERANSEVİM GÜVENLİK RAPORU (KVKK UYUMLU)
-----------------------------------
-Referans Kodu: {kod}
-Sorgulama Tarihi: {tarih}
-----------------------------------
-KİRACI BİLGİLERİ
-Ad Soyad: {ad}
-Güvenilirlik Puanı: {puan} / 5
-
-DETAYLI ANALİZ:
-{analiz_str}
-----------------------------------
-* Yasal Uyari: Sisteme yuklenen hicbir kimlik veya gelir belgesi sunucularda SAKLANMAMISTIR. 
-Tum belgeler analiz sonrasi aninda imha edilmistir."""
+    return f"REFERANSEVİM GÜVENLİK RAPORU (KVKK UYUMLU)\n----------------------------------\nReferans Kodu: {kod}\nSorgulama Tarihi: {tarih}\n----------------------------------\nKİRACI BİLGİLERİ\nAd Soyad: {ad}\nGüvenilirlik Puanı: {puan} / 5\n\nDETAYLI ANALİZ:\n{analiz_str}\n----------------------------------\n* Yasal Uyari: Sisteme yuklenen hicbir kimlik veya gelir belgesi sunucularda SAKLANMAMISTIR. Tum belgeler analiz sonrasi aninda imha edilmistir."
 
 def resmi_sozlesme_metni_hazirla(kiraci_adi, adres, kira_bedeli, depozito, odeme_gunu, zam_orani):
     tarih = datetime.now().strftime("%d/%m/%Y")
-    return f"""KİRA SÖZLEŞMESİ TASLAĞI
-Tarih: {tarih}
-
-1. TARAFLAR
-Kiraya Veren : _________________________________________ (T.C.: ____________________)
-Kiracı       : {kiraci_adi} (T.C.: ____________________)
-
-2. KİRALANANIN BİLGİLERİ
-Adres        : {adres}
-
-3. SÖZLEŞME ŞARTLARI VE BEDELLER
-Madde 3.1 - Aylık Kira Bedeli: {kira_bedeli} TL'dir.
-Madde 3.2 - Depozito Tutarı: {depozito} TL olarak belirlenmiştir.
-Madde 3.3 - Kira Ödeme Zamanı: {odeme_gunu} olarak kararlaştırılmıştır.
-Madde 3.4 - Yıllık Kira Artış Oranı: {zam_orani} olarak uygulanacaktır.
-
-4. GENEL HÜKÜMLER
-Madde 4.1 - Kiracı, kiralanan taşınmazı özenle kullanmak, bina yönetim kurallarına ve komşuluk ilişkilerine azami saygıyı göstermekle yükümlüdür.
-Madde 4.2 - Kiralanan taşınmazın alt kiraya verilmesi veya kullanım hakkının devredilmesi kesinlikle yasaktır.
-Madde 4.3 - İşbu sözleşmede yer almayan hususlarda 6098 sayılı Türk Borçlar Kanunu hükümleri geçerlidir.
-
-KİRAYA VEREN (İMZA)                              KİRACI (İMZA)
-
-
-
--------------------------------------------------------------------------
-* İşbu resmi sözleşme taslağı, taraflar arasında ön mutabakat sağlamak 
-amacıyla ReferansEvim Uzlaştırma Platformu aracılığıyla oluşturulmuştur.
-"""
+    return f"KİRA SÖZLEŞMESİ TASLAĞI\nTarih: {tarih}\n\n1. TARAFLAR\nKiraya Veren : _________________________________________ (T.C.: ____________________)\nKiracı       : {kiraci_adi} (T.C.: ____________________)\n\n2. KİRALANANIN BİLGİLERİ\nAdres        : {adres}\n\n3. SÖZLEŞME ŞARTLARI VE BEDELLER\nMadde 3.1 - Aylık Kira Bedeli: {kira_bedeli} TL'dir.\nMadde 3.2 - Depozito Tutarı: {depozito} TL olarak belirlenmiştir.\nMadde 3.3 - Kira Ödeme Zamanı: {odeme_gunu} olarak kararlaştırılmıştır.\nMadde 3.4 - Yıllık Kira Artış Oranı: {zam_orani} olarak uygulanacaktır.\n\n4. GENEL HÜKÜMLER\nMadde 4.1 - Kiracı, kiralanan taşınmazı özenle kullanmak, bina yönetim kurallarına ve komşuluk ilişkilerine azami saygıyı göstermekle yükümlüdür.\nMadde 4.2 - Kiralanan taşınmazın alt kiraya verilmesi veya kullanım hakkının devredilmesi kesinlikle yasaktır.\nMadde 4.3 - İşbu sözleşmede yer almayan hususlarda 6098 sayılı Türk Borçlar Kanunu hükümleri geçerlidir.\n\nKİRAYA VEREN (İMZA)                              KİRACI (İMZA)\n\n-------------------------------------------------------------------------\n* İşbu resmi sözleşme taslağı, taraflar arasında ön mutabakat sağlamak amacıyla ReferansEvim Uzlaştırma Platformu aracılığıyla oluşturulmuştur.\n"
 
 def qr_kod_olustur(veri):
     qr = qrcode.QRCode(box_size=10, border=4)
@@ -163,7 +126,6 @@ def qr_kod_olustur(veri):
 def detayli_puan_hesapla(gelir, findex, meslek, belge_durumu, eski_tel):
     puan = 0
     analiz = []
-    
     if gelir >= 40000: puan += 40; analiz.append("Gelir Seviyesi: Yüksek (+40p)")
     elif gelir >= 17002: puan += 20; analiz.append("Gelir Seviyesi: Standart/Orta (+20p)")
     else: puan += 10; analiz.append("Gelir Seviyesi: Düşük Riskli (+10p)")
@@ -189,11 +151,19 @@ if 'son_rapor' not in st.session_state: st.session_state.son_rapor = None
 if 'onaylanan_kiraci' not in st.session_state: st.session_state.onaylanan_kiraci = None
 
 if not st.session_state.giris_yapildi:
+    # --- YENİ VİTRİN TASARIMI ---
     col1, col2, col3 = st.columns([1, 2, 1])
     with col2:
-        st.markdown("<br><br><h1 style='text-align: center;'>ReferansEvim</h1>", unsafe_allow_html=True)
+        st.markdown("<br><br>", unsafe_allow_html=True)
+        
+        # LOGO ALANI (Şimdilik Typografi, logonu yapınca buraya 'st.image' ekleyeceğiz)
+        st.markdown("<h1 style='text-align: center; font-size: 3.5rem; font-weight: 800;'>Referans<span style='font-weight: 300;'>Evim</span></h1>", unsafe_allow_html=True)
+        st.markdown("<p style='text-align: center; color: gray;'>Türkiye'nin İlk Yapay Zeka Destekli Kiracı Doğrulama ve Uzlaştırma Platformu</p><br>", unsafe_allow_html=True)
+        
         st.info("💡 %100 KVKK Uyumlu: Yüklenen belgeler asla sunucularda saklanmaz, analiz sonrası anında imha edilir.")
-        tip = st.radio("Sisteme Giriş Tipi:", ("👤 Kiracı Girişi", "🔑 Ev Sahibi Girişi"))
+        
+        # GİRİŞ SEÇENEKLERİ (NOTLARINA GÖRE)
+        kullanici_tipi = st.selectbox("Sisteme Giriş Tipinizi Seçiniz", ["Kiracı Olarak Giriş Yap", "Ev Sahibi Olarak Giriş Yap"])
         
         with st.expander("⚖️ KVKK ve Aydınlatma Metnini Okumak İçin Tıklayınız"):
             st.write("""
@@ -205,12 +175,29 @@ if not st.session_state.giris_yapildi:
         
         onay = st.checkbox("KVKK Aydınlatma Metnini okudum, anladım ve kabul ediyorum.")
         
-        if st.button("Sisteme Güvenli Giriş Yap", use_container_width=True):
-            if onay:
-                st.session_state.giris_yapildi = True
-                st.session_state.kullanici_tipi = "kiraci" if "Kiracı" in tip else "evsahibi"
-                st.rerun()
-            else: st.error("Lütfen sisteme girmek için KVKK metnini onaylayınız.")
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        # SAHTE (VİZYON) GİRİŞ BUTONLARI
+        c_btn1, c_btn2 = st.columns(2)
+        with c_btn1:
+            st.markdown("<div class='btn-google'>", unsafe_allow_html=True)
+            if st.button("🌐 Google ile Giriş", use_container_width=True):
+                if onay:
+                    st.session_state.giris_yapildi = True
+                    st.session_state.kullanici_tipi = "kiraci" if "Kiracı" in kullanici_tipi else "evsahibi"
+                    st.rerun()
+                else: st.error("Lütfen KVKK metnini onaylayınız.")
+            st.markdown("</div>", unsafe_allow_html=True)
+            
+        with c_btn2:
+            st.markdown("<div class='btn-edevlet'>", unsafe_allow_html=True)
+            if st.button("🔴 e-Devlet ile Giriş", use_container_width=True):
+                if onay:
+                    st.session_state.giris_yapildi = True
+                    st.session_state.kullanici_tipi = "kiraci" if "Kiracı" in kullanici_tipi else "evsahibi"
+                    st.rerun()
+                else: st.error("Lütfen KVKK metnini onaylayınız.")
+            st.markdown("</div>", unsafe_allow_html=True)
 
 else:
     c1, c2 = st.columns([8, 1])
@@ -324,7 +311,6 @@ else:
                         else:
                             st.warning("Girdiğiniz kod sistemde bulunamadı. Lütfen kiracıdan kodu teyit edin.")
 
-        # SÖZLEŞME MODÜLÜ (Buton formun dışına alındı!)
         if st.session_state.onaylanan_kiraci:
             st.markdown("<br><hr><br>", unsafe_allow_html=True)
             st.subheader("🤝 Resmi Sözleşme ve Uzlaştırma Modülü")
@@ -342,7 +328,6 @@ else:
                 
                 sozlesme_uret = st.form_submit_button("📄 Sözleşme Üret", use_container_width=True)
             
-            # İndirme Butonu Artık Özgür!
             if sozlesme_uret:
                 if not adres or not odeme_gunu:
                     st.error("Lütfen adres ve ödeme günü bilgilerini eksiksiz doldurunuz.")
