@@ -27,7 +27,7 @@ st.markdown("""
     h1, h2, h3, h4, p, li, label, .stMarkdown, .stMarkdown p, [data-testid="stMarkdownContainer"] p, .stWidget label p {
         color: #002147 !important; font-family: 'Source Sans Pro', sans-serif;
     }
-    .stTextInput input, .stNumberInput input, .stSelectbox div, [data-testid="stHeader"] {
+    .stTextInput input, .stNumberInput input, .stSelectbox div, [data-testid="stHeader"], .stTextArea textarea {
         background-color: #ffffff !important; color: #000000 !important; border: 1px solid #cccccc !important;
     }
     .stSlider [data-testid="stWidgetLabel"] p, .stSlider div { color: #002147 !important; }
@@ -101,7 +101,7 @@ def belgeyi_tara_ve_dogrula(uploaded_file, belge_tipi="tapu"):
     if eslesme_sayisi >= limit: return True, f"Doğrulandı! ({', '.join(bulunanlar)})"
     else: return False, f"Anahtar kelime bulunamadı. (Okunan: {metin_icerigi[:50]}...)"
 
-# --- RAPOR, QR VE PUANLAMA ---
+# --- RAPOR VE SÖZLEŞME METİNLERİ ---
 def rapor_metni_hazirla(ad, kod, puan, tarih, analiz):
     analiz_str = "\n".join([f"- {madde}" for madde in analiz])
     return f"""REFERANSEVİM GÜVENLİK RAPORU (KVKK UYUMLU)
@@ -116,9 +116,40 @@ Güvenilirlik Puanı: {puan} / 5
 DETAYLI ANALİZ:
 {analiz_str}
 ----------------------------------
-* Yasal Uyari: Bu rapor ReferansEvim yapay zeka sistemleri tarafindan hazirlanmistir. 
-Sisteme yuklenen hicbir kimlik veya gelir belgesi sunucularda SAKLANMAMISTIR. 
+* Yasal Uyari: Sisteme yuklenen hicbir kimlik veya gelir belgesi sunucularda SAKLANMAMISTIR. 
 Tum belgeler analiz sonrasi aninda imha edilmistir."""
+
+def resmi_sozlesme_metni_hazirla(kiraci_adi, adres, kira_bedeli, depozito, odeme_gunu, zam_orani):
+    tarih = datetime.now().strftime("%d/%m/%Y")
+    return f"""KİRA SÖZLEŞMESİ TASLAĞI
+Tarih: {tarih}
+
+1. TARAFLAR
+Kiraya Veren : _________________________________________ (T.C.: ____________________)
+Kiracı       : {kiraci_adi} (T.C.: ____________________)
+
+2. KİRALANANIN BİLGİLERİ
+Adres        : {adres}
+
+3. SÖZLEŞME ŞARTLARI VE BEDELLER
+Madde 3.1 - Aylık Kira Bedeli: {kira_bedeli} TL'dir.
+Madde 3.2 - Depozito Tutarı: {depozito} TL olarak belirlenmiştir.
+Madde 3.3 - Kira Ödeme Zamanı: {odeme_gunu} olarak kararlaştırılmıştır.
+Madde 3.4 - Yıllık Kira Artış Oranı: {zam_orani} olarak uygulanacaktır.
+
+4. GENEL HÜKÜMLER
+Madde 4.1 - Kiracı, kiralanan taşınmazı özenle kullanmak, bina yönetim kurallarına ve komşuluk ilişkilerine azami saygıyı göstermekle yükümlüdür.
+Madde 4.2 - Kiralanan taşınmazın alt kiraya verilmesi veya kullanım hakkının devredilmesi kesinlikle yasaktır.
+Madde 4.3 - İşbu sözleşmede yer almayan hususlarda 6098 sayılı Türk Borçlar Kanunu hükümleri geçerlidir.
+
+KİRAYA VEREN (İMZA)                              KİRACI (İMZA)
+
+
+
+-------------------------------------------------------------------------
+* İşbu resmi sözleşme taslağı, taraflar arasında ön mutabakat sağlamak 
+amacıyla ReferansEvim Uzlaştırma Platformu aracılığıyla oluşturulmuştur.
+"""
 
 def qr_kod_olustur(veri):
     qr = qrcode.QRCode(box_size=10, border=4)
@@ -155,6 +186,7 @@ def detayli_puan_hesapla(gelir, findex, meslek, belge_durumu, eski_tel):
 if 'giris_yapildi' not in st.session_state: st.session_state.giris_yapildi = False
 if 'kullanici_tipi' not in st.session_state: st.session_state.kullanici_tipi = None 
 if 'son_rapor' not in st.session_state: st.session_state.son_rapor = None
+if 'onaylanan_kiraci' not in st.session_state: st.session_state.onaylanan_kiraci = None
 
 if not st.session_state.giris_yapildi:
     col1, col2, col3 = st.columns([1, 2, 1])
@@ -163,14 +195,12 @@ if not st.session_state.giris_yapildi:
         st.info("💡 %100 KVKK Uyumlu: Yüklenen belgeler asla sunucularda saklanmaz, analiz sonrası anında imha edilir.")
         tip = st.radio("Sisteme Giriş Tipi:", ("👤 Kiracı Girişi", "🔑 Ev Sahibi Girişi"))
         
-        # --- YENİ PROFESYONEL KVKK ONAYI ---
         with st.expander("⚖️ KVKK ve Aydınlatma Metnini Okumak İçin Tıklayınız"):
             st.write("""
             **Kişisel Verilerin Korunması ve Veri İmha Politikası**
-            1. Sisteme yüklediğiniz belgeler (Maaş Bordrosu, Tapu vb.) yapay zeka tarafından sadece anlık olarak okunur.
-            2. Okuma işlemi bittikten hemen sonra belgeniz sunucularımızdan **kalıcı olarak silinir**. Veritabanımızda hiçbir dosya tutulmaz.
+            1. Sisteme yüklediğiniz belgeler yapay zeka tarafından sadece anlık olarak okunur.
+            2. Okuma işlemi bittikten hemen sonra belgeniz sunucularımızdan **kalıcı olarak silinir**.
             3. T.C. Kimlik numaranız doğrulama amaçlı istenir ve asla kayıt altına alınmaz.
-            4. Bu platformu kullanarak, girdiğiniz verilerin kendi rızanızla analiz edilmesini onaylamış olursunuz.
             """)
         
         onay = st.checkbox("KVKK Aydınlatma Metnini okudum, anladım ve kabul ediyorum.")
@@ -187,7 +217,7 @@ else:
     with c1: st.title("🏠 ReferansEvim Paneli")
     with c2:
         if st.button("Güvenli Çıkış"):
-            st.session_state.giris_yapildi = False; st.session_state.son_rapor = None; st.rerun()
+            st.session_state.giris_yapildi = False; st.session_state.son_rapor = None; st.session_state.onaylanan_kiraci = None; st.rerun()
     st.markdown("---")
 
     # KİRACI PANELİ
@@ -213,12 +243,11 @@ else:
                     belge_ok = False
                     if dosya:
                         with st.spinner("Maaş bordrosu yapay zeka ile taranıyor (OCR)..."):
-                            time.sleep(1) # Animasyon hissi için
+                            time.sleep(1) 
                             ok, msg = belgeyi_tara_ve_dogrula(dosya, "maas")
                             if ok: 
                                 belge_ok = True
                                 st.success(f"{msg}")
-                                # --- GÜVENLİK İMHA MESAJI ---
                                 st.info("🛡️ Güvenlik Protokolü: Yüklenen belge veritabanından kalıcı olarak silindi.")
                             else: st.warning(f"Bordro onaylanamadı: {msg}")
                     
@@ -226,7 +255,6 @@ else:
                     kod = f"REF-{random.randint(10000, 99999)}"
                     tarih = datetime.now().strftime("%d-%m-%Y")
                     
-                    # DİKKAT: T.C. KİMLİK NUMARASINI VERİTABANINA ASLA KAYDETMİYORUZ!
                     veri = {"ad": ad, "puan": puan, "tarih": tarih, "analiz": analiz, "meslek": meslek}
                     veri_kaydet(kod, veri)
                     st.session_state.son_rapor = {"kod": kod, "veri": veri}
@@ -281,22 +309,61 @@ else:
                         db = verileri_yukle()
                         if kod in db:
                             k = db[kod]
+                            st.session_state.onaylanan_kiraci = k['ad'] # Sözleşme için ismi hafızaya alıyoruz
                             analiz_html = "".join([f"<li>{m}</li>" for m in k['analiz']])
                             st.markdown(f"""
                             <div style="background:white; padding:25px; border-left:10px solid #002147; border-radius:5px; margin-top:10px;">
                                 <h2 style="color:#002147; margin:0;">✅ KİRACI RAPORU BULUNDU</h2>
                                 <hr>
                                 <p style="color:black !important; font-size:1.1em;"><b>İsim:</b> {k['ad']}</p>
-                                <p style="color:black !important; font-size:1.1em;"><b>Meslek:</b> {k.get('meslek', 'Belirtilmedi')}</p>
                                 <p style="color:black !important; font-size:1.1em;"><b>Güvenilirlik Puanı:</b> {k['puan']} / 5</p>
                                 <h4 style="color:#002147; margin-top:15px;">🔍 Sistem Analizi:</h4>
                                 <ul style="color:black !important;">{analiz_html}</ul>
-                                <p style="color:gray !important; font-size:0.8em; margin-top:10px;"><em>Rapor Oluşturma Tarihi: {k['tarih']}</em></p>
                             </div>
                             """, unsafe_allow_html=True)
-                            
-                            st.markdown("<br>", unsafe_allow_html=True)
-                            txt = rapor_metni_hazirla(k['ad'], kod, k['puan'], k['tarih'], k['analiz'])
-                            st.download_button("📄 Kiracı Sicil Raporunu İndir", txt, file_name=f"ReferansEvim_Sorgu_{kod}.txt", use_container_width=True)
                         else:
                             st.warning("Girdiğiniz kod sistemde bulunamadı. Lütfen kiracıdan kodu teyit edin.")
+
+        # YENİ EKLENEN SÖZLEŞME MODÜLÜ (Sadece kiracı bulunduğunda açılır)
+        if st.session_state.onaylanan_kiraci:
+            st.markdown("<br><hr><br>", unsafe_allow_html=True)
+            st.subheader("🤝 Resmi Sözleşme ve Uzlaştırma Modülü")
+            st.info("Kiracı ile anlaştıysanız, aşağıdaki bilgileri doldurarak resmi 'Kira Sözleşmesi Taslağınızı' saniyeler içinde oluşturabilirsiniz. (Puan ve ReferansEvim analizleri resmi sözleşmede yer almaz).")
+            
+            with st.form("sozlesme_form"):
+                adres = st.text_area("Kiralanan Taşınmazın Tam Adresi")
+                col1, col2 = st.columns(2)
+                with col1:
+                    kira_bedeli = st.number_input("Aylık Kira Bedeli (TL)", step=1000, value=15000)
+                    odeme_gunu = st.text_input("Kira Ödeme Günü", placeholder="Örn: Her ayın 1'i ile 5'i arası")
+                with col2:
+                    depozito = st.number_input("Depozito Tutarı (TL)", step=1000, value=15000)
+                    zam_orani = st.selectbox("Yıllık Zam Oranı", ["Yasal TÜFE Oranında", "Sabit Oran (Metne Eklenecek)", "Taraflar Arasında Belirlenecektir"])
+                
+                sozlesme_uret = st.form_submit_button("📄 Resmi Sözleşme Taslağını Üret", use_container_width=True)
+                
+                if sozlesme_uret:
+                    if not adres or not odeme_gunu:
+                        st.error("Lütfen adres ve ödeme günü bilgilerini eksiksiz doldurunuz.")
+                    else:
+                        sozlesme_metni = resmi_sozlesme_metni_hazirla(
+                            st.session_state.onaylanan_kiraci, 
+                            adres, 
+                            kira_bedeli, 
+                            depozito, 
+                            odeme_gunu, 
+                            zam_orani
+                        )
+                        st.success("✅ Resmi Sözleşme Taslağınız Başarıyla Üretildi!")
+                        
+                        # İndirme butonu oluştur (Form içinde çalıştığı için özel tasarım)
+                        st.download_button(
+                            label="📥 SÖZLEŞMEYİ İNDİR (TXT FORMATINDA)",
+                            data=sozlesme_metni,
+                            file_name=f"Kira_Sozlesmesi_{st.session_state.onaylanan_kiraci.replace(' ', '_')}.txt",
+                            mime="text/plain",
+                            use_container_width=True
+                        )
+                        
+                        with st.expander("Sözleşme Önizlemesini Görüntüle"):
+                            st.text(sozlesme_metni)
