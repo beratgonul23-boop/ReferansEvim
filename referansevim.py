@@ -43,7 +43,13 @@ st.markdown("""
     [data-testid="stMetricValue"] { color: #002147 !important; font-size: 2rem !important; font-weight: 800 !important; }
     [data-testid="stMetricDelta"] { font-size: 1rem !important; }
     
-    .dashboard-box { background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; }
+    .dashboard-box { background-color: white; padding: 20px; border-radius: 10px; border: 1px solid #eee; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 20px; transition: transform 0.2s; }
+    .dashboard-box:hover { transform: translateY(-5px); box-shadow: 0 6px 12px rgba(0,0,0,0.1); }
+    
+    /* Sekme Tasarımı İçin */
+    .stTabs [data-baseweb="tab-list"] { gap: 10px; }
+    .stTabs [data-baseweb="tab"] { background-color: transparent !important; border-radius: 4px 4px 0px 0px; border: none !important; color: #002147 !important; padding: 10px 20px !important; }
+    .stTabs [aria-selected="true"] { border-bottom: 3px solid #002147 !important; font-weight: bold; background-color: #e6eef5 !important;}
 </style>
 """, unsafe_allow_html=True)
 
@@ -171,11 +177,9 @@ else:
     st.markdown("---")
 
     # ==========================================
-    # 👤 KİRACI PANELİ VE KONTROL EKRANI (DASHBOARD)
+    # 👤 KİRACI PANELİ 
     # ==========================================
     if st.session_state.kullanici_tipi == "kiraci":
-        
-        # EĞER RAPOR YOKSA FORM GÖSTER
         if not st.session_state.son_rapor:
             st.subheader("📝 Akıllı Referans Raporu Oluştur")
             with st.form("k_form"):
@@ -208,14 +212,12 @@ else:
                         veri = {"ad": ad, "puan": puan, "tarih": tarih, "analiz": analiz, "meslek": meslek}
                         veri_kaydet(kod, veri)
                         st.session_state.son_rapor = {"kod": kod, "veri": veri}
-                        st.rerun() # Paneli yenilemek için
+                        st.rerun() 
 
-        # EĞER RAPOR VARSA DASHBOARD (KONTROL PANELİ) GÖSTER
         if st.session_state.son_rapor:
             rp = st.session_state.son_rapor
             st.success(f"Hoş Geldiniz Sayın {rp['veri']['ad']}, Profiliniz Aktif.")
             
-            # KİRACI DASHBOARD METRİKLERİ
             m1, m2, m3 = st.columns(3)
             m1.metric(label="ReferansEvim Güven Puanınız", value=f"⭐ {rp['veri']['puan']} / 5", delta="Platform Ortalamasının Üstünde", delta_color="normal")
             m2.metric(label="Yaklaşan Kira Ödemesi", value="Bekleniyor", delta="Henüz sözleşme eşleşmesi yapılmadı", delta_color="off")
@@ -223,19 +225,17 @@ else:
             
             st.markdown("<br>", unsafe_allow_html=True)
             
-            # KİRACI PROFİL VE SİCİL DETAYI
             c_sol, c_sag = st.columns([2,1])
             with c_sol:
                 st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
                 st.subheader("📊 Dijital Kira Sicili ve Raporunuz")
-                st.write("Bu rapor sizin dijital emlak itibarınızdır. Düzenli kira ödedikçe puanınız artar, yeni ev kiralarken bir adım önde olursunuz.")
+                st.write("Bu rapor sizin dijital emlak itibarınızdır. Düzenli kira ödedikçe puanınız artar.")
                 with st.expander("Sistem Analiz Detaylarınızı Görüntüleyin"):
                     for madde in rp['veri']['analiz']: st.write(madde)
                 st.markdown("</div>", unsafe_allow_html=True)
                 
                 st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
                 st.subheader("💳 Kira Ödeme Geçmişi")
-                st.info("Sistemimizde aktif bir kira sözleşmeniz bulunduğunda ödemelerinizi buradan takip edebilir ve ev sahibine dekont iletebilirsiniz.")
                 st.button("Dekont Yükle / Ev Sahibine Bildir (Yakında)", disabled=True)
                 st.markdown("</div>", unsafe_allow_html=True)
 
@@ -250,83 +250,116 @@ else:
                 st.markdown("</div>", unsafe_allow_html=True)
 
     # ==========================================
-    # 🔑 EV SAHİBİ PANELİ VE KONTROL EKRANI (DASHBOARD)
+    # 🔑 EV SAHİBİ PANELİ (SEKMELİ YAPI)
     # ==========================================
     elif st.session_state.kullanici_tipi == "evsahibi":
         
-        if not st.session_state.onaylanan_kiraci:
-            st.subheader("🛡️ Kiracı & Belge Doğrulama Merkezi")
-            st.info("⚠️ Lütfen Tapu belgenizi yükleyiniz. Belgeniz analiz edildikten sonra SAKLANMADAN SİLİNECEKTİR.")
-            
-            tapu = st.file_uploader("Tapu Belgesi Yükle (Anında İmha Edilir)", type=["pdf", "jpg", "png"])
-            kod = st.text_input("Kiracının Size Verdiği Kod (Örn: REF-12345)")
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            if st.button("Belgeyi Tarat ve Sorgula 🔍", use_container_width=True):
-                if not tapu: st.error("Lütfen önce kendi Tapu belgenizi yükleyin.")
-                else:
-                    with st.spinner("Güvenlik Taraması Yapılıyor..."):
-                        time.sleep(1)
-                        ok, msg = belgeyi_tara_ve_dogrula(tapu, "tapu")
-                        if not ok: st.error(msg)
-                        else:
-                            st.success("✅ Tapu belgesi geçerli, anında imha edildi.")
-                            db = verileri_yukle()
-                            if kod in db:
-                                st.session_state.onaylanan_kiraci = db[kod]['ad']
-                                st.session_state.kiraci_puan = db[kod]['puan']
-                                st.rerun() # Dashboard'a geçiş için sayfayı yenile
-                            else:
-                                st.warning("Girdiğiniz kod sistemde bulunamadı.")
+        # Sekmeleri Oluşturuyoruz
+        tab1, tab2 = st.tabs(["🔍 Manuel Kiracı Sorgulama & Sözleşme", "💎 Premium Kiracı Havuzu (Pazar Yeri)"])
         
-        # EĞER KİRACI BULUNDUYSA EV SAHİBİ DASHBOARD GÖSTER
-        if st.session_state.onaylanan_kiraci:
-            k_isim = st.session_state.onaylanan_kiraci
-            k_puan = st.session_state.kiraci_puan
-            
-            st.success("✅ Sistem Onaylı Emlak Yönetim Paneline Hoş Geldiniz.")
-            
-            # EV SAHİBİ DASHBOARD METRİKLERİ
-            m1, m2, m3 = st.columns(3)
-            m1.metric(label="Mevcut Aktif Kiracınız", value=k_isim, delta=f"Güven Puanı: ⭐ {k_puan}", delta_color="normal")
-            m2.metric(label="Aylık Beklenen Kira Geliri", value="15.000 TL", delta="Ödeme Bekleniyor", delta_color="off")
-            m3.metric(label="Sözleşme Durumu", value="Taslak Hazır", delta="E-Devlet Onayı Bekleniyor", delta_color="normal")
-            
-            st.markdown("<br>", unsafe_allow_html=True)
-            
-            c_sol, c_sag = st.columns([2,1])
-            
-            with c_sol:
-                st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
-                st.subheader("🗓️ Aylık Kira Takip Çizelgesi")
-                st.write("Kiracınızın ödemelerini buradan takip edebilir, zamanında yapılan ödemeleri onaylayarak kiracınızın ReferansEvim itibarını artırabilirsiniz.")
-                
-                # SİMÜLASYON TABLO
-                st.markdown("""
-                | Ay | Beklenen Tutar | Ödeme Durumu | Ev Sahibi Onayı |
-                |---|---|---|---|
-                | Ocak 2026 | 15.000 TL | 🟢 Ödendi | ✅ Onaylandı |
-                | Şubat 2026 | 15.000 TL | 🟢 Ödendi | ✅ Onaylandı |
-                | Mart 2026 | 15.000 TL | ⏳ Bekleniyor | 🔘 Onay Bekliyor |
-                """)
+        with tab1:
+            if not st.session_state.onaylanan_kiraci:
+                st.subheader("🛡️ Kiracı Doğrulama Merkezi")
+                st.info("⚠️ Lütfen Tapu belgenizi yükleyiniz. Belgeniz analiz edildikten sonra SAKLANMADAN SİLİNECEKTİR.")
+                tapu = st.file_uploader("Tapu Belgesi Yükle (Anında İmha Edilir)", type=["pdf", "jpg", "png"])
+                kod = st.text_input("Kiracının Size Verdiği Kod (Örn: REF-12345)")
                 st.markdown("<br>", unsafe_allow_html=True)
-                if st.button("Mart Ayı Ödemesini Onayla (Kiracının Puanını Artır)", use_container_width=True):
-                    st.success("✅ Ödeme başarıyla onaylandı. Kiracının güvenilirlik puanına +0.1 eklendi.")
-                st.markdown("</div>", unsafe_allow_html=True)
+                
+                if st.button("Belgeyi Tarat ve Sorgula 🔍", use_container_width=True):
+                    if not tapu: st.error("Lütfen önce kendi Tapu belgenizi yükleyin.")
+                    else:
+                        with st.spinner("Güvenlik Taraması Yapılıyor..."):
+                            time.sleep(1)
+                            ok, msg = belgeyi_tara_ve_dogrula(tapu, "tapu")
+                            if not ok: st.error(msg)
+                            else:
+                                st.success("✅ Tapu belgesi geçerli, anında imha edildi.")
+                                db = verileri_yukle()
+                                if kod in db:
+                                    st.session_state.onaylanan_kiraci = db[kod]['ad']
+                                    st.session_state.kiraci_puan = db[kod]['puan']
+                                    st.rerun() 
+                                else: st.warning("Girdiğiniz kod sistemde bulunamadı.")
+            
+            if st.session_state.onaylanan_kiraci:
+                k_isim = st.session_state.onaylanan_kiraci
+                k_puan = st.session_state.kiraci_puan
+                st.success("✅ Sistem Onaylı Emlak Yönetim Paneline Hoş Geldiniz.")
+                
+                m1, m2, m3 = st.columns(3)
+                m1.metric(label="Mevcut Aktif Kiracınız", value=k_isim, delta=f"Güven Puanı: ⭐ {k_puan}", delta_color="normal")
+                m2.metric(label="Aylık Beklenen Kira Geliri", value="15.000 TL", delta="Ödeme Bekleniyor", delta_color="off")
+                m3.metric(label="Sözleşme Durumu", value="Taslak Hazır", delta="E-Devlet Onayı Bekleniyor", delta_color="normal")
+                st.markdown("<br>", unsafe_allow_html=True)
+                
+                c_sol, c_sag = st.columns([2,1])
+                with c_sol:
+                    st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
+                    st.subheader("🗓️ Aylık Kira Takip Çizelgesi")
+                    st.markdown("""
+                    | Ay | Beklenen Tutar | Ödeme Durumu | Ev Sahibi Onayı |
+                    |---|---|---|---|
+                    | Ocak 2026 | 15.000 TL | 🟢 Ödendi | ✅ Onaylandı |
+                    | Mart 2026 | 15.000 TL | ⏳ Bekleniyor | 🔘 Onay Bekliyor |
+                    """)
+                    st.markdown("<br>", unsafe_allow_html=True)
+                    if st.button("Mart Ayı Ödemesini Onayla (Kiracının Puanını Artır)", use_container_width=True):
+                        st.success("✅ Ödeme başarıyla onaylandı. Kiracının güvenilirlik puanına +0.1 eklendi.")
+                    st.markdown("</div>", unsafe_allow_html=True)
 
-            with c_sag:
-                st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
-                st.subheader("🤝 Sözleşme Modülü")
-                st.info("E-Devlet veya manuel imza öncesi resmi sözleşme taslağınızı anında üretin.")
-                with st.form("s_form"):
-                    adres = st.text_input("Adres")
-                    kira = st.number_input("Kira Tutarı (TL)", value=15000)
-                    gun = st.text_input("Ödeme Günü")
-                    s_uret = st.form_submit_button("📄 Taslak Üret", use_container_width=True)
-                    if s_uret:
-                        if adres and gun:
-                            metin = resmi_sozlesme_metni_hazirla(k_isim, adres, kira, 15000, gun, "TÜFE")
-                            st.success("Sözleşme Hazır!")
-                            st.download_button("📥 İndir", metin, "sozlesme.txt", use_container_width=True)
-                        else: st.error("Lütfen adres ve gün girin.")
+                with c_sag:
+                    st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
+                    st.subheader("🤝 Sözleşme Modülü")
+                    with st.form("s_form"):
+                        adres = st.text_input("Adres")
+                        kira = st.number_input("Kira Tutarı (TL)", value=15000)
+                        gun = st.text_input("Ödeme Günü")
+                        s_uret = st.form_submit_button("📄 Taslak Üret", use_container_width=True)
+                        if s_uret:
+                            if adres and gun:
+                                metin = resmi_sozlesme_metni_hazirla(k_isim, adres, kira, 15000, gun, "TÜFE")
+                                st.success("Sözleşme Hazır!")
+                                st.download_button("📥 İndir", metin, "sozlesme.txt", use_container_width=True)
+                            else: st.error("Lütfen adres ve gün girin.")
+                    st.markdown("</div>", unsafe_allow_html=True)
+
+        # YENİ EKLENEN VİZYONER BÖLÜM: KİRACI HAVUZU (MARKETPLACE)
+        with tab2:
+            st.markdown("<br>", unsafe_allow_html=True)
+            st.markdown("### 🌟 Onaylı Premium Kiracı Adayları")
+            st.info("💡 Bu alanda sadece ReferansEvim yapay zekasından yüksek puan almış, gelir belgesi onaylanmış VIP kiracılar listelenir. Ev sahipleri diledikleri adaya teklif gönderebilir. (KVKK gereği soyisimler gizlenmiştir).")
+            
+            p_col1, p_col2, p_col3 = st.columns(3)
+            
+            with p_col1:
+                st.markdown("<div class='dashboard-box' style='text-align:center;'>", unsafe_allow_html=True)
+                st.markdown("<h2 style='color:#002147;'>B*** G***</h2>", unsafe_allow_html=True)
+                st.markdown("💼 **Meslek:** Kurucu (TheFLXBrand)")
+                st.markdown("⭐ **Güven Puanı:** 4.8 / 5")
+                st.markdown("💳 **Gelir Durumu:** Yüksek (AI Onaylı)")
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🤝 Eşleşme İsteği Gönder", key="btn_p1", use_container_width=True):
+                    st.success("Talebiniz kiracı adayına iletildi!")
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+            with p_col2:
+                st.markdown("<div class='dashboard-box' style='text-align:center;'>", unsafe_allow_html=True)
+                st.markdown("<h2 style='color:#002147;'>A*** Y***</h2>", unsafe_allow_html=True)
+                st.markdown("💼 **Meslek:** Finans Uzmanı")
+                st.markdown("⭐ **Güven Puanı:** 4.5 / 5")
+                st.markdown("💳 **Gelir Durumu:** Yüksek (AI Onaylı)")
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🤝 Eşleşme İsteği Gönder", key="btn_p2", use_container_width=True):
+                    st.success("Talebiniz kiracı adayına iletildi!")
+                st.markdown("</div>", unsafe_allow_html=True)
+                
+            with p_col3:
+                st.markdown("<div class='dashboard-box' style='text-align:center;'>", unsafe_allow_html=True)
+                st.markdown("<h2 style='color:#002147;'>M*** K***</h2>", unsafe_allow_html=True)
+                st.markdown("💼 **Meslek:** Öğretmen (MEB)")
+                st.markdown("⭐ **Güven Puanı:** 4.1 / 5")
+                st.markdown("💳 **Gelir Durumu:** Standart (AI Onaylı)")
+                st.markdown("<br>", unsafe_allow_html=True)
+                if st.button("🤝 Eşleşme İsteği Gönder", key="btn_p3", use_container_width=True):
+                    st.success("Talebiniz kiracı adayına iletildi!")
                 st.markdown("</div>", unsafe_allow_html=True)
