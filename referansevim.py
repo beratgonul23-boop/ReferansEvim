@@ -68,7 +68,6 @@ def veri_kaydet(kod, veri):
     with open(DB_DOSYASI, "w", encoding="utf-8") as f: json.dump(db, f, ensure_ascii=False, indent=4)
 
 def belgeyi_tara_ve_dogrula(uploaded_file, belge_tipi="tapu"):
-    # YAPAY ZEKA KAPALIYSA SAHTE BELGELERİ ENGELLEYEN YENİ SİMÜLASYON ALGORİTMASI
     if not OCR_AKTIF: 
         isim = uploaded_file.name.lower()
         if "logo" in isim or "ekran" in isim or "screenshot" in isim or "png.png" in isim:
@@ -124,7 +123,7 @@ def detayli_puan_hesapla(gelir, findex, meslek, belge_durumu):
     else: analiz.append("Maaş Bordrosu: Yüklenmedi (0p)")
     yildiz = round((puan/100)*5 * 2) / 2
     if yildiz < 1: yildiz = 1.0 
-    return yildiz, analiz, round(gelir * 0.4) 
+    return yildiz, analiz
 
 # --- UYGULAMA ---
 if 'giris_yapildi' not in st.session_state: st.session_state.giris_yapildi = False
@@ -179,9 +178,15 @@ else:
             st.subheader("📝 Akıllı Referans Raporu Oluştur (Ücretsiz)")
             with st.form("k_form"):
                 c1, c2 = st.columns(2)
-                with c1: ad = st.text_input("Ad Soyad"); tc = st.text_input("T.C. Kimlik No (Saklanmaz)")
-                with c2: gelir = st.number_input("Aylık Net Gelir (TL)", step=1000, value=40000); findex = st.slider("Tahmini Findeks Kredi Notu", 0, 1900, 1500)
-                meslek = st.text_input("Meslek / Şirket")
+                with c1: 
+                    ad = st.text_input("Ad Soyad")
+                    tc = st.text_input("T.C. Kimlik No (Saklanmaz)")
+                    meslek = st.text_input("Meslek / Şirket")
+                with c2: 
+                    gelir = st.number_input("Aylık Net Gelir (TL)", step=1000, value=40000)
+                    kapasite_input = st.number_input("Aylık Ödeyebileceğiniz Maks. Kira Bütçeniz (TL)", step=1000, value=15000)
+                    findex = st.slider("Tahmini Findeks Kredi Notu", 0, 1900, 1500)
+                
                 st.markdown("<hr>", unsafe_allow_html=True)
                 dosya = st.file_uploader("Maaş Bordrosu (Anında imha edilir)", type=["pdf", "jpg", "png"])
                 
@@ -194,10 +199,10 @@ else:
                             if ok: belge_ok = True; st.success(f"Belge Onaylandı: {msg}")
                             else: st.error(f"Reddedildi: {msg}")
                         
-                        puan, analiz, kapasite = detayli_puan_hesapla(gelir, findex, meslek, belge_ok)
+                        puan, analiz = detayli_puan_hesapla(gelir, findex, meslek, belge_ok)
                         kod = f"REF-{random.randint(10000, 99999)}"
                         tarih = datetime.now().strftime("%d-%m-%Y")
-                        veri = {"ad": ad, "puan": puan, "tarih": tarih, "analiz": analiz, "meslek": meslek, "kapasite": kapasite}
+                        veri = {"ad": ad, "puan": puan, "tarih": tarih, "analiz": analiz, "meslek": meslek, "kapasite": kapasite_input}
                         veri_kaydet(kod, veri)
                         st.session_state.son_rapor = {"kod": kod, "veri": veri}
                         st.rerun() 
@@ -210,7 +215,7 @@ else:
                 st.success(f"Hoş Geldiniz Sayın {rp['veri']['ad']}, Profiliniz Aktif.")
                 m1, m2, m3 = st.columns(3)
                 m1.metric(label="ReferansEvim Güven Puanınız", value=f"⭐ {rp['veri']['puan']} / 5", delta="Yüksek Puan")
-                m2.metric(label="Tahmini Ödeme Kapasiteniz", value=f"~{rp['veri']['kapasite']} TL", delta="Güçlü Maaş")
+                m2.metric(label="Maksimum Kira Bütçeniz", value=f"{rp['veri']['kapasite']} TL", delta="Sizin Belirlediğiniz Tutar")
                 m3.metric(label="Mevcut Referans Kodunuz", value=rp['kod'], delta="Ev Sahibiyle Paylaşın")
                 st.markdown("<br><hr>", unsafe_allow_html=True)
                 
@@ -305,7 +310,6 @@ else:
                 
                 st.markdown("<br><hr><br>", unsafe_allow_html=True)
                 
-                # SİLİNEN O DEVASA SÖZLEŞME VE TABLO MODÜLÜ GERİ GELDİ!
                 c_sol, c_sag = st.columns([2,1])
                 with c_sol:
                     st.markdown("<div class='dashboard-box'>", unsafe_allow_html=True)
@@ -354,7 +358,7 @@ else:
                 st.markdown("<h2 style='color:#002147;'>B*** G***</h2>", unsafe_allow_html=True)
                 st.markdown("💼 Kurucu (TheFLXBrand)")
                 st.markdown("⭐ **Güven Puanı:** 4.8 / 5")
-                st.markdown("💳 **Kapasite:** ~25.000 TL")
+                st.markdown("💳 **Kapasite:** 25.000 TL")
                 st.button("Eşleşme İste", key="ep1", use_container_width=True)
                 st.markdown("</div>", unsafe_allow_html=True)
                 
@@ -363,7 +367,7 @@ else:
                 st.markdown("<h2 style='color:#002147;'>A*** Y***</h2>", unsafe_allow_html=True)
                 st.markdown("💼 Finans Uzmanı")
                 st.markdown("⭐ **Güven Puanı:** 4.5 / 5")
-                st.markdown("💳 **Kapasite:** ~40.000 TL")
+                st.markdown("💳 **Kapasite:** 40.000 TL")
                 st.button("Eşleşme İste", key="ep2", use_container_width=True)
                 st.markdown("</div>", unsafe_allow_html=True)
                 
@@ -372,7 +376,7 @@ else:
                 st.markdown("<h2 style='color:#002147;'>M*** K***</h2>", unsafe_allow_html=True)
                 st.markdown("💼 Öğretmen")
                 st.markdown("⭐ **Güven Puanı:** 4.1 / 5")
-                st.markdown("💳 **Kapasite:** ~18.000 TL")
+                st.markdown("💳 **Kapasite:** 18.000 TL")
                 st.button("Eşleşme İste", key="ep3", use_container_width=True)
                 st.markdown("</div>", unsafe_allow_html=True)
 
