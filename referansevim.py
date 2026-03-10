@@ -309,7 +309,7 @@ else:
                         db = verileri_yukle()
                         if kod in db:
                             k = db[kod]
-                            st.session_state.onaylanan_kiraci = k['ad'] # Sözleşme için ismi hafızaya alıyoruz
+                            st.session_state.onaylanan_kiraci = k['ad'] 
                             analiz_html = "".join([f"<li>{m}</li>" for m in k['analiz']])
                             st.markdown(f"""
                             <div style="background:white; padding:25px; border-left:10px solid #002147; border-radius:5px; margin-top:10px;">
@@ -324,11 +324,11 @@ else:
                         else:
                             st.warning("Girdiğiniz kod sistemde bulunamadı. Lütfen kiracıdan kodu teyit edin.")
 
-        # YENİ EKLENEN SÖZLEŞME MODÜLÜ (Sadece kiracı bulunduğunda açılır)
+        # SÖZLEŞME MODÜLÜ (Buton formun dışına alındı!)
         if st.session_state.onaylanan_kiraci:
             st.markdown("<br><hr><br>", unsafe_allow_html=True)
             st.subheader("🤝 Resmi Sözleşme ve Uzlaştırma Modülü")
-            st.info("Kiracı ile anlaştıysanız, aşağıdaki bilgileri doldurarak resmi 'Kira Sözleşmesi Taslağınızı' saniyeler içinde oluşturabilirsiniz. (Puan ve ReferansEvim analizleri resmi sözleşmede yer almaz).")
+            st.info("Kiracı ile anlaştıysanız, aşağıdaki bilgileri doldurarak resmi 'Kira Sözleşmesi Taslağınızı' oluşturabilirsiniz.")
             
             with st.form("sozlesme_form"):
                 adres = st.text_area("Kiralanan Taşınmazın Tam Adresi")
@@ -340,30 +340,30 @@ else:
                     depozito = st.number_input("Depozito Tutarı (TL)", step=1000, value=15000)
                     zam_orani = st.selectbox("Yıllık Zam Oranı", ["Yasal TÜFE Oranında", "Sabit Oran (Metne Eklenecek)", "Taraflar Arasında Belirlenecektir"])
                 
-                sozlesme_uret = st.form_submit_button("📄 Resmi Sözleşme Taslağını Üret", use_container_width=True)
-                
-                if sozlesme_uret:
-                    if not adres or not odeme_gunu:
-                        st.error("Lütfen adres ve ödeme günü bilgilerini eksiksiz doldurunuz.")
-                    else:
-                        sozlesme_metni = resmi_sozlesme_metni_hazirla(
-                            st.session_state.onaylanan_kiraci, 
-                            adres, 
-                            kira_bedeli, 
-                            depozito, 
-                            odeme_gunu, 
-                            zam_orani
-                        )
-                        st.success("✅ Resmi Sözleşme Taslağınız Başarıyla Üretildi!")
-                        
-                        # İndirme butonu oluştur (Form içinde çalıştığı için özel tasarım)
-                        st.download_button(
-                            label="📥 SÖZLEŞMEYİ İNDİR (TXT FORMATINDA)",
-                            data=sozlesme_metni,
-                            file_name=f"Kira_Sozlesmesi_{st.session_state.onaylanan_kiraci.replace(' ', '_')}.txt",
-                            mime="text/plain",
-                            use_container_width=True
-                        )
-                        
-                        with st.expander("Sözleşme Önizlemesini Görüntüle"):
-                            st.text(sozlesme_metni)
+                sozlesme_uret = st.form_submit_button("📄 Sözleşme Üret", use_container_width=True)
+            
+            # İndirme Butonu Artık Özgür!
+            if sozlesme_uret:
+                if not adres or not odeme_gunu:
+                    st.error("Lütfen adres ve ödeme günü bilgilerini eksiksiz doldurunuz.")
+                else:
+                    sozlesme_metni = resmi_sozlesme_metni_hazirla(
+                        st.session_state.onaylanan_kiraci, 
+                        adres, 
+                        kira_bedeli, 
+                        depozito, 
+                        odeme_gunu, 
+                        zam_orani
+                    )
+                    st.success("✅ Sözleşmeniz başarıyla oluşturuldu! Aşağıdan indirebilir veya inceleyebilirsiniz.")
+                    
+                    st.download_button(
+                        label="📥 SÖZLEŞMEYİ İNDİR (TXT FORMATINDA)",
+                        data=sozlesme_metni,
+                        file_name=f"Kira_Sozlesmesi_{st.session_state.onaylanan_kiraci.replace(' ', '_')}.txt",
+                        mime="text/plain",
+                        use_container_width=True
+                    )
+                    
+                    with st.expander("📄 Sözleşme Önizlemesini Görüntüle"):
+                        st.text(sozlesme_metni)
