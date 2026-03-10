@@ -254,7 +254,6 @@ else:
     # ==========================================
     elif st.session_state.kullanici_tipi == "evsahibi":
         
-        # Sekmeleri Oluşturuyoruz
         tab1, tab2 = st.tabs(["🔍 Manuel Kiracı Sorgulama & Sözleşme", "💎 Premium Kiracı Havuzu (Pazar Yeri)"])
         
         with tab1:
@@ -323,7 +322,6 @@ else:
                             else: st.error("Lütfen adres ve gün girin.")
                     st.markdown("</div>", unsafe_allow_html=True)
 
-        # YENİ EKLENEN VİZYONER BÖLÜM: KİRACI HAVUZU (MARKETPLACE)
         with tab2:
             st.markdown("<br>", unsafe_allow_html=True)
             st.markdown("### 🌟 Onaylı Premium Kiracı Adayları")
@@ -336,7 +334,7 @@ else:
                 st.markdown("<h2 style='color:#002147;'>B*** G***</h2>", unsafe_allow_html=True)
                 st.markdown("💼 **Meslek:** Kurucu (TheFLXBrand)")
                 st.markdown("⭐ **Güven Puanı:** 4.8 / 5")
-                st.markdown("💳 **Gelir Durumu:** Yüksek (AI Onaylı)")
+                st.markdown("💳 **Ödeme Kapasitesi:** ~25.000 TL / Ay")
                 st.markdown("<br>", unsafe_allow_html=True)
                 if st.button("🤝 Eşleşme İsteği Gönder", key="btn_p1", use_container_width=True):
                     st.success("Talebiniz kiracı adayına iletildi!")
@@ -347,7 +345,7 @@ else:
                 st.markdown("<h2 style='color:#002147;'>A*** Y***</h2>", unsafe_allow_html=True)
                 st.markdown("💼 **Meslek:** Finans Uzmanı")
                 st.markdown("⭐ **Güven Puanı:** 4.5 / 5")
-                st.markdown("💳 **Gelir Durumu:** Yüksek (AI Onaylı)")
+                st.markdown("💳 **Ödeme Kapasitesi:** ~40.000 TL / Ay")
                 st.markdown("<br>", unsafe_allow_html=True)
                 if st.button("🤝 Eşleşme İsteği Gönder", key="btn_p2", use_container_width=True):
                     st.success("Talebiniz kiracı adayına iletildi!")
@@ -358,7 +356,7 @@ else:
                 st.markdown("<h2 style='color:#002147;'>M*** K***</h2>", unsafe_allow_html=True)
                 st.markdown("💼 **Meslek:** Öğretmen (MEB)")
                 st.markdown("⭐ **Güven Puanı:** 4.1 / 5")
-                st.markdown("💳 **Gelir Durumu:** Standart (AI Onaylı)")
+                st.markdown("💳 **Ödeme Kapasitesi:** ~18.000 TL / Ay")
                 st.markdown("<br>", unsafe_allow_html=True)
                 if st.button("🤝 Eşleşme İsteği Gönder", key="btn_p3", use_container_width=True):
                     st.success("Talebiniz kiracı adayına iletildi!")
